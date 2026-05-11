@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SafariGuard Global — Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --void:#060608;--surface:#0d0d14;--card:#13131f;--card2:#1a1a2a;
+  --border:#252535;--border2:#323248;
+  --gold:#c9a84c;--gold2:#f0c96e;--gold-glow:rgba(201,168,76,.18);
+  --green:#00e676;--green-dim:rgba(0,230,118,.1);
+  --red:#ff3b3b;--red-dim:rgba(255,59,59,.1);
+  --amber:#ffab00;--amber-dim:rgba(255,171,0,.1);
+  --muted:#6a6a88;--text:#ddddf0;
+  --mono:'JetBrains Mono',monospace;
+  --display:'Orbitron',monospace;
+  --body:'Syne',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--void);color:var(--text);font-family:var(--body);overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(201,168,76,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.03) 1px,transparent 1px);
+  background-size:48px 48px;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 52px;background:rgba(6,6,8,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.nb{display:flex;align-items:center;gap:14px;}
+.nlogo{font-family:var(--display);font-size:13px;font-weight:800;letter-spacing:3px;color:var(--gold);text-transform:uppercase;line-height:1.2;}
+.nsub{font-size:8px;color:var(--muted);letter-spacing:3.5px;margin-top:3px;font-family:var(--mono);}
+.ncortex{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green);}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite;}
+.nl{display:flex;gap:28px;list-style:none;}
+.nl a{color:var(--muted);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);transition:color .3s;}
+.nl a:hover{color:var(--gold);}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,230,118,.5)}50%{opacity:.5;box-shadow:0 0 0 6px rgba(0,230,118,0)}}
+
+/* TICKER */
+.ticker{position:relative;z-index:10;margin-top:65px;background:rgba(255,59,59,.06);
+  border-top:1px solid rgba(255,59,59,.15);border-bottom:1px solid rgba(255,59,59,.15);
+  padding:8px 0;overflow:hidden;}
+.ttrack{display:flex;animation:tscroll 38s linear infinite;white-space:nowrap;}
+.tick{display:inline-flex;align-items:center;gap:9px;padding:0 56px;font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--muted);}
+.td{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.td.g{background:var(--green);}.td.r{background:var(--red);}.td.a{background:var(--amber);}
+@keyframes tscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:90px 24px 70px;overflow:hidden;}
+.ring{position:absolute;border-radius:50%;border:1px solid rgba(201,168,76,.1);animation:rout 5.5s ease-out infinite;pointer-events:none;}
+.ring:nth-child(1){width:260px;height:260px;animation-delay:0s}
+.ring:nth-child(2){width:460px;height:460px;animation-delay:1.3s}
+.ring:nth-child(3){width:660px;height:660px;animation-delay:2.6s}
+.ring:nth-child(4){width:860px;height:860px;animation-delay:3.9s}
+@keyframes rout{0%{opacity:.8;transform:scale(.82)}100%{opacity:0;transform:scale(1.06)}}
+.hero-inner{position:relative;z-index:2;max-width:860px;}
+.hpill{display:inline-flex;align-items:center;gap:8px;margin-bottom:34px;background:var(--gold-glow);
+  border:1px solid rgba(201,168,76,.25);border-radius:100px;padding:6px 22px;
+  font-family:var(--mono);font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;}
+h1{font-family:var(--display);font-size:clamp(24px,6vw,62px);font-weight:900;letter-spacing:3px;text-transform:uppercase;line-height:1.1;color:#fff;}
+h1 em{display:block;color:var(--gold);font-style:normal;}
+.hsub{margin:26px auto 48px;max-width:600px;font-size:clamp(13px,1.8vw,16px);color:var(--muted);line-height:1.8;}
+.hsub b{color:var(--gold2);font-weight:600;}
+.lbar{display:inline-flex;gap:32px;flex-wrap:wrap;justify-content:center;padding:20px 36px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;}
+.lv{text-align:center;}
+.lvv{font-family:var(--display);font-size:22px;font-weight:700;color:var(--gold);}
+.lvv.g{color:var(--green);}.lvv.r{color:var(--red);}
+.lvl{font-size:8.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:5px;font-family:var(--mono);}
+.lsep{width:1px;background:var(--border);align-self:stretch;}
+
+/* SECTION HEADER */
+.sechd{text-align:center;margin-bottom:56px;}
+.seclb{font-family:var(--mono);font-size:9px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;}
+.sectitle{font-family:var(--display);font-size:clamp(17px,2.8vw,28px);font-weight:700;color:#fff;letter-spacing:2px;}
+
+/* PORTALS */
+.portals{position:relative;z-index:1;padding:90px 52px;max-width:1280px;margin:0 auto;}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
+.pcard{display:block;text-decoration:none;position:relative;overflow:hidden;
+  background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 28px;
+  transition:transform .3s,border-color .35s;}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--gold));
+  transform:scaleX(0);transform-origin:left;transition:transform .4s;}
+.pcard:hover{transform:translateY(-5px);border-color:var(--ac,var(--gold));}
+.pcard:hover::before{transform:scaleX(1);}
+.pcard:hover .picon{filter:drop-shadow(0 0 14px var(--ac,var(--gold)));}
+.pcard.cg{--ac:var(--green)}.pcard.co{--ac:var(--gold)}.pcard.cr{--ac:var(--red)}.pcard.ca{--ac:var(--amber)}
+.picon{font-size:42px;display:block;margin-bottom:20px;transition:filter .3s;}
+.ptag{display:inline-block;margin-bottom:12px;padding:3px 12px;border-radius:100px;font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;}
+.cg .ptag{background:var(--green-dim);color:var(--green);}
+.co .ptag{background:var(--gold-glow);color:var(--gold);}
+.cr .ptag{background:var(--red-dim);color:var(--red);}
+.ca .ptag{background:var(--amber-dim);color:var(--amber);}
+.ptitle{font-family:var(--display);font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:10px;}
+.pdesc{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:26px;}
+.pcta{display:flex;justify-content:space-between;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ac,var(--gold));font-family:var(--mono);}
+
+/* AGENTS */
+.agents-section{position:relative;z-index:1;padding:90px 52px;background:var(--surface);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.agents-inner{max-width:1280px;margin:0 auto;}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:56px;}
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;}
+.agent-head{padding:22px 26px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.aiwrap{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.agent-card.threat .aiwrap{background:var(--red-dim);border:1px solid rgba(255,59,59,.2);}
+.agent-card.route  .aiwrap{background:var(--green-dim);border:1px solid rgba(0,230,118,.2);}
+.agent-card.kin    .aiwrap{background:var(--amber-dim);border:1px solid rgba(255,171,0,.2);}
+.agent-card.biz    .aiwrap{background:var(--gold-glow);border:1px solid rgba(201,168,76,.2);}
+.aname{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:1.5px;color:#fff;text-transform:uppercase;}
+.arole{font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;color:var(--muted);margin-top:3px;}
+.astatus{margin-left:auto;display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:1px;}
+.astatus .pdot{width:6px;height:6px;}
+.agent-card.threat .astatus,.agent-card.threat .astatus .pdot{color:var(--red);background:var(--red);}
+.agent-card.route  .astatus,.agent-card.route  .astatus .pdot{color:var(--green);background:var(--green);}
+.agent-card.kin    .astatus,.agent-card.kin    .astatus .pdot{color:var(--amber);background:var(--amber);}
+.agent-card.biz    .astatus,.agent-card.biz    .astatus .pdot{color:var(--gold);background:var(--gold);}
+.astatus span.pdot{background:currentColor;}
+
+.agent-body{flex:1;display:flex;flex-direction:column;padding:18px 24px 22px;}
+.chat-win{flex:1;min-height:150px;max-height:210px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:9px;}
+.chat-win::-webkit-scrollbar{width:3px;}
+.chat-win::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.msg{max-width:92%;padding:9px 13px;border-radius:11px;font-size:11.5px;line-height:1.65;font-family:var(--mono);}
+.msg.ai{background:var(--card2);color:var(--text);border-bottom-left-radius:3px;align-self:flex-start;border:1px solid var(--border);}
+.msg.user{background:var(--gold-glow);color:var(--gold2);border-bottom-right-radius:3px;align-self:flex-end;border:1px solid rgba(201,168,76,.2);}
+.qps{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.qp{padding:3px 9px;border-radius:100px;font-family:var(--mono);font-size:8.5px;letter-spacing:.8px;
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .25s;}
+.agent-card.threat .qp:hover{border-color:var(--red);color:var(--red);}
+.agent-card.route  .qp:hover{border-color:var(--green);color:var(--green);}
+.agent-card.kin    .qp:hover{border-color:var(--amber);color:var(--amber);}
+.agent-card.biz    .qp:hover{border-color:var(--gold);color:var(--gold);}
+.ainput-row{display:flex;gap:7px;}
+.ainp{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:9px 13px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none;transition:border-color .3s;}
+.ainp::placeholder{color:var(--muted);}
+.agent-card.threat .ainp:focus{border-color:rgba(255,59,59,.4);}
+.agent-card.route  .ainp:focus{border-color:rgba(0,230,118,.3);}
+.agent-card.kin    .ainp:focus{border-color:rgba(255,171,0,.3);}
+.agent-card.biz    .ainp:focus{border-color:rgba(201,168,76,.35);}
+.sbtn{padding:9px 13px;border-radius:8px;border:none;cursor:pointer;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:all .25s;flex-shrink:0;}
+.agent-card.threat .sbtn{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,59,59,.2);}
+.agent-card.route  .sbtn{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,230,118,.2);}
+.agent-card.kin    .sbtn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,171,0,.2);}
+.agent-card.biz    .sbtn{background:var(--gold-glow);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.typing-dots{display:flex;gap:4px;padding:8px 12px;align-items:center;}
+.typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:tdot 1.2s ease-in-out infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s}.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-5px);opacity:1}}
+
+/* HOW */
+.how{position:relative;z-index:1;padding:90px 52px;}
+.how-inner{max-width:1100px;margin:0 auto;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:56px;position:relative;}
+.steps::before{content:'';position:absolute;top:40px;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.step{text-align:center;padding:0 16px;}
+.stepn{width:80px;height:80px;border-radius:50%;margin:0 auto 20px;background:var(--card);border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:20px;font-weight:900;color:var(--gold);
+  position:relative;z-index:2;transition:border-color .3s,box-shadow .3s;}
+.step:hover .stepn{border-color:var(--gold);box-shadow:0 0 30px rgba(201,168,76,.35);}
+.stept{font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:1.5px;color:#fff;margin-bottom:10px;text-transform:uppercase;}
+.stepd{font-size:12px;color:var(--muted);line-height:1.7;font-family:var(--mono);}
+
+/* PRICING */
+.pricing{position:relative;z-index:1;padding:90px 52px;max-width:1200px;margin:0 auto;}
+.prgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;margin-top:56px;}
+.prcard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:38px 30px;position:relative;transition:transform .3s;}
+.prcard:hover{transform:translateY(-4px);}
+.prcard.feat{border-color:var(--gold);background:linear-gradient(150deg,#15152a,#0d0d16);}
+.feattag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--void);
+  font-family:var(--display);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  padding:4px 18px;border-radius:100px;white-space:nowrap;}
+.ptier{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;}
+.pname{font-size:20px;font-weight:700;color:#fff;margin-bottom:24px;}
+.pprice{display:flex;align-items:baseline;gap:3px;margin-bottom:28px;}
+.pcurr{font-size:14px;color:var(--muted);}
+.pamt{font-family:var(--display);font-size:46px;font-weight:900;color:var(--gold2);line-height:1;}
+.pper{font-size:12px;color:var(--muted);margin-left:2px;}
+.pfeats{list-style:none;margin-bottom:32px;}
+.pfeats li{font-size:12px;color:var(--muted);padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;gap:10px;font-family:var(--mono);}
+.pfeats li::before{content:'▸';color:var(--green);font-size:9px;flex-shrink:0;}
+.btn{display:block;width:100%;padding:14px;border-radius:10px;font-family:var(--display);font-size:9px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:all .3s;text-align:center;text-decoration:none;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--void);}
+.btn-gold:hover{box-shadow:0 0 32px rgba(201,168,76,.45);transform:translateY(-1px);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+/* FOOTER */
+footer{position:relative;z-index:1;background:var(--surface);border-top:1px solid var(--border);padding:56px 52px;text-align:center;}
+.ftname{font-family:var(--display);font-size:18px;font-weight:900;letter-spacing:5px;color:var(--gold);margin-bottom:8px;}
+.ftsub{font-size:10px;color:var(--muted);letter-spacing:2.5px;margin-bottom:36px;font-family:var(--mono);}
+.ftlinks{display:flex;justify-content:center;gap:36px;list-style:none;margin-bottom:36px;flex-wrap:wrap;}
+.ftlinks a{font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:1.5px;font-family:var(--mono);transition:color .3s;text-transform:uppercase;}
+.ftlinks a:hover{color:var(--gold);}
+.ftcopy{font-size:10px;color:#282838;letter-spacing:1px;font-family:var(--mono);}
+.ftcopy b{color:#3a3a52;}
+
+@media(max-width:768px){
+  nav{padding:12px 18px;}.nl{display:none;}
+  .portals,.pricing,.how{padding:60px 18px;}
+  .agents-section{padding:60px 18px;}
+  footer{padding:40px 18px;}
+  .steps::before{display:none;}
+  .lbar{gap:18px;padding:16px 18px;}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nb">
+    <svg width="40" height="40" viewBox="0 0 42 42" fill="none">
+      <path d="M21 3L5 10v13c0 9.8 7.1 19 16 21.4C29.9 42 37 32.8 37 23V10L21 3z" fill="rgba(201,168,76,0.1)" stroke="#c9a84c" stroke-width="1.3"/>
+      <circle cx="21" cy="21" r="7" stroke="#c9a84c" stroke-width="1.1" fill="none"/>
+      <circle cx="21" cy="21" r="2.2" fill="#c9a84c"/>
+      <line x1="21" y1="12" x2="21" y2="9" stroke="#c9a84c" stroke-width="1.1"/>
+      <line x1="21" y1="30" x2="21" y2="33" stroke="#c9a84c" stroke-width="1.1"/>
+      <line x1="12" y1="21" x2="9" y2="21" stroke="#c9a84c" stroke-width="1.1"/>
+      <line x1="30" y1="21" x2="33" y2="21" stroke="#c9a84c" stroke-width="1.1"/>
+    </svg>
+    <div><div class="nlogo">SafariGuard</div><div class="nsub">Global Command Center</div></div>
+  </div>
+  <div class="ncortex"><div class="pdot"></div>CORTEX ONLINE</div>
+  <ul class="nl">
+    <li><a href="#portals">Portals</a></li>
+    <li><a href="#agents">AI Agents</a></li>
+    <li><a href="#intelligence">Intelligence</a></li>
+    <li><a href="#subscribe">Subscribe</a></li>
+  </ul>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ttrack">
+    <span class="tick"><span class="td g"></span>ZONE: Westlands — GREEN CORRIDOR ACTIVE</span>
+    <span class="tick"><span class="td a"></span>ALERT: Karen — CAUTION ADVISORY ISSUED</span>
+    <span class="tick"><span class="td g"></span>SAFE HAVEN: Java House CBD — VERIFIED NODE</span>
+    <span class="tick"><span class="td r"></span>INCIDENT FLAGGED: Eastleigh — REPORTED TO AUTHORITIES</span>
+    <span class="tick"><span class="td g"></span>KINGUARD: 312 CHILDREN IN TRANSIT — ALL TRACKED</span>
+    <span class="tick"><span class="td a"></span>STRIDEGUARD: ROUTE 7 — CORRIDOR DEVIATION DETECTED</span>
+    <span class="tick"><span class="td g"></span>BIZGUARD: 47 SAFE HAVENS VERIFIED — NAIROBI CENTRAL</span>
+    <span class="tick"><span class="td g"></span>SOVEREIGN CORTEX — BIGQUERY SYNC: ACTIVE</span>
+    <span class="tick"><span class="td r"></span>THREAT AGENT: ANOMALY CLUSTER — ANALYZING</span>
+    <span class="tick"><span class="td g"></span>ZONE: Westlands — GREEN CORRIDOR ACTIVE</span>
+    <span class="tick"><span class="td a"></span>ALERT: Karen — CAUTION ADVISORY ISSUED</span>
+    <span class="tick"><span class="td g"></span>SAFE HAVEN: Java House CBD — VERIFIED NODE</span>
+    <span class="tick"><span class="td r"></span>INCIDENT FLAGGED: Eastleigh — REPORTED TO AUTHORITIES</span>
+    <span class="tick"><span class="td g"></span>KINGUARD: 312 CHILDREN IN TRANSIT — ALL TRACKED</span>
+    <span class="tick"><span class="td a"></span>STRIDEGUARD: ROUTE 7 — CORRIDOR DEVIATION DETECTED</span>
+    <span class="tick"><span class="td g"></span>BIZGUARD: 47 SAFE HAVENS VERIFIED — NAIROBI CENTRAL</span>
+    <span class="tick"><span class="td g"></span>SOVEREIGN CORTEX — BIGQUERY SYNC: ACTIVE</span>
+    <span class="tick"><span class="td r"></span>THREAT AGENT: ANOMALY CLUSTER — ANALYZING</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div>
+  <div class="hero-inner">
+    <div class="hpill">⬡ Decentralized Safety Intelligence Network</div>
+    <h1>The World's First<em>Crowdsourced Safety Grid</em></h1>
+    <p class="hsub">SafariGuard Global converts <b>human movement into actionable safety intelligence</b> — mapping Green Corridors, flagging Danger Zones, and protecting joggers, children, estates &amp; businesses in real time. Powered by the <b>Sovereign Cortex.</b></p>
+    <div class="lbar">
+      <div class="lv"><div class="lvv g" id="cnt-nodes">4,812</div><div class="lvl">Active Nodes</div></div>
+      <div class="lsep"></div>
+      <div class="lv"><div class="lvv">217</div><div class="lvl">Safe Havens</div></div>
+      <div class="lsep"></div>
+      <div class="lv"><div class="lvv r" id="cnt-alerts">3</div><div class="lvl">Live Alerts</div></div>
+      <div class="lsep"></div>
+      <div class="lv"><div class="lvv">98.4%</div><div class="lvl">Cortex Uptime</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTALS -->
+<section class="portals" id="portals">
+  <div class="sechd">
+    <div class="seclb">▸ Select Your Mission</div>
+    <h2 class="sectitle">Command Entry Portals</h2>
+  </div>
+  <div class="pgrid">
+    <a href="#subscribe" class="pcard cg">
+      <span class="picon">🛡️</span>
+      <div class="ptag">Estates &amp; Residential</div>
+      <div class="ptitle">Register a Safe Haven</div>
+      <p class="pdesc">Connect your estate to the Sovereign Cortex. Become a verified Safe Haven node — protecting residents and auto-reporting anomalies to authorities.</p>
+      <div class="pcta"><span>Activate ZoneGuard</span><span>→</span></div>
+    </a>
+    <a href="#subscribe" class="pcard co">
+      <span class="picon">🏃</span>
+      <div class="ptag">Joggers &amp; Athletes</div>
+      <div class="ptitle">Activate Personal Guard</div>
+      <p class="pdesc">Map your routes as Green Corridors. StrideGuard tracks GPS telemetry silently — alerting your network the moment you deviate from a safe path.</p>
+      <div class="pcta"><span>Activate StrideGuard</span><span>→</span></div>
+    </a>
+    <a href="#subscribe" class="pcard cr">
+      <span class="picon">🎒</span>
+      <div class="ptag">Parents &amp; Schools</div>
+      <div class="ptitle">Protect Your Child</div>
+      <p class="pdesc">KinGuard establishes verified transit corridors for school journeys. Parents and school security get instant alerts when a route is compromised.</p>
+      <div class="pcta"><span>Activate KinGuard</span><span>→</span></div>
+    </a>
+    <a href="#subscribe" class="pcard ca">
+      <span class="picon">🏢</span>
+      <div class="ptag">SMEs &amp; Corporate</div>
+      <div class="ptitle">Become a Safety Node</div>
+      <p class="pdesc">BizGuard verifies your business as a checked-in Safe Haven. Tourists locate you on the Safety Map as a trusted, real-time anchor point.</p>
+      <div class="pcta"><span>Activate BizGuard</span><span>→</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- AI AGENTS -->
+<section class="agents-section" id="agents">
+  <div class="agents-inner">
+    <div class="sechd">
+      <div class="seclb">▸ Live Intelligence Agents</div>
+      <h2 class="sectitle">Sovereign AI Operations</h2>
+      <p style="margin-top:14px;font-size:12px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;">
+        Four specialist AI agents — active 24/7. Each powered by the Cortex. Ask them anything.
+      </p>
+    </div>
+    <div class="agents-grid">
+
+      <!-- THREAT ANALYST -->
+      <div class="agent-card threat">
+        <div class="agent-head">
+          <div class="aiwrap">🎯</div>
+          <div>
+            <div class="aname">Threat Analyst</div>
+            <div class="arole">DANGER ZONE DETECTION · CORTEX FEED</div>
+          </div>
+          <div class="astatus"><div class="pdot" style="background:var(--red);box-shadow:none;animation:none;"></div>ACTIVE</div>
+        </div>
+        <div class="agent-body">
+          <div class="qps">
+            <button class="qp" onclick="qp('threat','Is Eastleigh safe right now?')">Eastleigh safety</button>
+            <button class="qp" onclick="qp('threat','What crime patterns should I watch in Nairobi?')">Crime patterns</button>
+            <button class="qp" onclick="qp('threat','Flag dangerous hotspots near CBD')">CBD hotspots</button>
+          </div>
+          <div class="chat-win" id="cw-threat">
+            <div class="msg ai">🎯 Threat Analyst online. I analyze crime patterns, anomaly clusters, and danger zones from the Cortex feed. Query any area or situation.</div>
+          </div>
+          <div class="ainput-row">
+            <input class="ainp" id="inp-threat" type="text" placeholder="Report a threat or query a zone…" onkeydown="if(event.key==='Enter')send('threat')"/>
+            <button class="sbtn" onclick="send('threat')">SEND</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROUTE ADVISOR -->
+      <div class="agent-card route">
+        <div class="agent-head">
+          <div class="aiwrap">🗺️</div>
+          <div>
+            <div class="aname">Route Advisor</div>
+            <div class="arole">SAFE CORRIDORS · STRIDEGUARD INTEL</div>
+          </div>
+          <div class="astatus"><div class="pdot" style="background:var(--green);box-shadow:none;animation:none;"></div>ACTIVE</div>
+        </div>
+        <div class="agent-body">
+          <div class="qps">
+            <button class="qp" onclick="qp('route','Best safe running routes in Nairobi?')">Safe running routes</button>
+            <button class="qp" onclick="qp('route','Tourist safety tips for Nairobi city centre')">Tourist tips</button>
+            <button class="qp" onclick="qp('route','How do I register a Green Corridor?')">Register corridor</button>
+          </div>
+          <div class="chat-win" id="cw-route">
+            <div class="msg ai">🗺️ Route Advisor online. I map Green Corridors, verify safe paths, and advise tourists and joggers on optimal safety routes. Where are you heading?</div>
+          </div>
+          <div class="ainput-row">
+            <input class="ainp" id="inp-route" type="text" placeholder="Ask about a route or safe zone…" onkeydown="if(event.key==='Enter')send('route')"/>
+            <button class="sbtn" onclick="send('route')">SEND</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KINGUARD -->
+      <div class="agent-card kin">
+        <div class="agent-head">
+          <div class="aiwrap">🎒</div>
+          <div>
+            <div class="aname">KinGuard Agent</div>
+            <div class="arole">CHILD TRANSIT SAFETY · SCHOOL CORRIDORS</div>
+          </div>
+          <div class="astatus"><div class="pdot" style="background:var(--amber);box-shadow:none;animation:none;"></div>ACTIVE</div>
+        </div>
+        <div class="agent-body">
+          <div class="qps">
+            <button class="qp" onclick="qp('kin','How does KinGuard track my child?')">How tracking works</button>
+            <button class="qp" onclick="qp('kin','What alerts do parents receive?')">Parent alerts</button>
+            <button class="qp" onclick="qp('kin','How do I register my school for KinGuard?')">Register school</button>
+          </div>
+          <div class="chat-win" id="cw-kin">
+            <div class="msg ai">🎒 KinGuard Agent online. I specialize in child transit safety — setting up school corridors, configuring parent alerts, and monitoring safe journey completions.</div>
+          </div>
+          <div class="ainput-row">
+            <input class="ainp" id="inp-kin" type="text" placeholder="Ask about child safety or school setup…" onkeydown="if(event.key==='Enter')send('kin')"/>
+            <button class="sbtn" onclick="send('kin')">SEND</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BIZGUARD -->
+      <div class="agent-card biz">
+        <div class="agent-head">
+          <div class="aiwrap">🏢</div>
+          <div>
+            <div class="aname">BizGuard Agent</div>
+            <div class="arole">SME VERIFICATION · SAFE HAVEN NODES</div>
+          </div>
+          <div class="astatus"><div class="pdot" style="background:var(--gold);box-shadow:none;animation:none;"></div>ACTIVE</div>
+        </div>
+        <div class="agent-body">
+          <div class="qps">
+            <button class="qp" onclick="qp('biz','How do I register my business as a Safe Haven?')">Register Safe Haven</button>
+            <button class="qp" onclick="qp('biz','What benefits do SMEs get from BizGuard?')">SME benefits</button>
+            <button class="qp" onclick="qp('biz','How are businesses shown on the Safety Map?')">Map visibility</button>
+          </div>
+          <div class="chat-win" id="cw-biz">
+            <div class="msg ai">🏢 BizGuard Agent online. I verify businesses as Safe Haven nodes on the Safety Map — helping SMEs become trusted anchor points for tourists and subscribers.</div>
+          </div>
+          <div class="ainput-row">
+            <input class="ainp" id="inp-biz" type="text" placeholder="Ask about business registration or nodes…" onkeydown="if(event.key==='Enter')send('biz')"/>
+            <button class="sbtn" onclick="send('biz')">SEND</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="intelligence">
+  <div class="how-inner">
+    <div class="sechd">
+      <div class="seclb">▸ Intelligence Architecture</div>
+      <h2 class="sectitle">How the Sovereign Cortex Works</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="stepn">01</div>
+        <div class="stept">Silent Collection</div>
+        <p class="stepd">Sub-apps silently collect GPS pings from logged-in Google accounts — joggers, children, estate residents, and businesses — continuously in the background.</p>
+      </div>
+      <div class="step">
+        <div class="stepn">02</div>
+        <div class="stept">Cortex Ingestion</div>
+        <p class="stepd">All pings stream into the Sovereign Cortex (BigQuery), structured into incident logs, safe-route coordinates, and time-stamped zone state data.</p>
+      </div>
+      <div class="step">
+        <div class="stepn">03</div>
+        <div class="stept">AI Analytics</div>
+        <p class="stepd">Specialist AI agents and statistical inference detect anomaly clusters — auto-flagging Danger Zones and generating authority reports in real time.</p>
+      </div>
+      <div class="step">
+        <div class="stepn">04</div>
+        <div class="stept">Safety Output</div>
+        <p class="stepd">The Mother Dashboard surfaces a live heat map. Tourists see Green Corridors, Yellow Advisories, and Red Alerts — updated every Cortex cycle.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="subscribe">
+  <div class="sechd">
+    <div class="seclb">▸ Join the Network</div>
+    <h2 class="sectitle">Subscription Tiers</h2>
+  </div>
+  <div class="prgrid">
+    <div class="prcard">
+      <div class="ptier">Tier 1</div>
+      <div class="pname">Personal Guard</div>
+      <div class="pprice"><span class="pcurr">$</span><span class="pamt">9</span><span class="pper">/ mo</span></div>
+      <ul class="pfeats">
+        <li>StrideGuard GPS Corridor Tracking</li>
+        <li>KinGuard Child Transit Alerts</li>
+        <li>Tourist Safety Map Access</li>
+        <li>1 Active Device</li>
+        <li>Basic Incident Notifications</li>
+      </ul>
+      <a href="#" class="btn btn-ghost">Activate Now</a>
+    </div>
+    <div class="prcard feat">
+      <div class="feattag">Most Popular</div>
+      <div class="ptier">Tier 2</div>
+      <div class="pname">Safe Haven Node</div>
+      <div class="pprice"><span class="pcurr">$</span><span class="pamt">29</span><span class="pper">/ mo</span></div>
+      <ul class="pfeats">
+        <li>ZoneGuard Estate Security Logs</li>
+        <li>BizGuard Verified Node Badge</li>
+        <li>Full Cortex Dashboard Access</li>
+        <li>Authority Report Notifications</li>
+        <li>Up to 50 Residents / Staff</li>
+        <li>Priority Alert Routing</li>
+      </ul>
+      <a href="#" class="btn btn-gold">Activate Now</a>
+    </div>
+    <div class="prcard">
+      <div class="ptier">Tier 3</div>
+      <div class="pname">Sovereign Partner</div>
+      <div class="pprice"><span class="pcurr">$</span><span class="pamt">99</span><span class="pper">/ mo</span></div>
+      <ul class="pfeats">
+        <li>Full Cortex Analytics Access</li>
+        <li>Custom Danger Zone Reports</li>
+        <li>NGO / Authority API Feed</li>
+        <li>Unlimited Users</li>
+        <li>Priority Intelligence Briefings</li>
+        <li>White-label Data Exports</li>
+      </ul>
+      <a href="#" class="btn btn-ghost">Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ftname">SAFARIGUARD GLOBAL</div>
+  <div class="ftsub">Sovereign Safety Intelligence &nbsp;·&nbsp; Built in Kenya &nbsp;·&nbsp; Deployed Globally</div>
+  <ul class="ftlinks">
+    <li><a href="#portals">Portals</a></li>
+    <li><a href="#agents">AI Agents</a></li>
+    <li><a href="#intelligence">Intelligence</a></li>
+    <li><a href="#subscribe">Subscribe</a></li>
+    <li><a href="#">Privacy Policy</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <div class="ftcopy">&copy; 2025 SafariGuard Global &nbsp;·&nbsp; <b>Sovereign Cortex</b> powered by Google BigQuery &nbsp;·&nbsp; IP &amp; Data Assets: <b>Daniel R. Owuor</b></div>
+</footer>
+
+<script>
+// ── AGENT CONFIG ──
+const AGENTS = {
+  threat: {
+    system: `You are the SafariGuard Global Threat Analyst Agent — a specialist AI inside the SafariGuard Command Center.
+Your role:
+- Analyze crime patterns, danger zones, and security threats in Kenya and globally
+- Report on anomaly clusters from the Sovereign Cortex (BigQuery safety database)
+- Classify areas as RED (danger), AMBER (caution), or GREEN (safe) zones with reasoning
+- Generate authority-ready incident summaries for Police and NGO partners
+- Reference the SafariGuard ecosystem: StrideGuard (joggers), KinGuard (children), ZoneGuard (estates), BizGuard (SMEs)
+- Be direct, data-driven, intelligence-briefing style. Keep responses focused and concise.
+Tone: Professional, urgent when appropriate, precise.`
+  },
+  route: {
+    system: `You are the SafariGuard Global Route Advisor Agent — a specialist AI for safe movement planning.
+Your role:
+- Map and verify Green Corridors for joggers, tourists, and daily commuters in Kenya and globally
+- Advise on safe routes based on Cortex intelligence data
+- Help users register their routes as verified Green Corridors in the SafariGuard network
+- Provide time-of-day safety guidance (e.g. "Green at 10AM, Amber after 8PM")
+- Guide tourists to BizGuard-verified Safe Haven businesses on their route
+- Be practical, location-specific, and actionable in all advice.
+Tone: Calm, knowledgeable, like a trusted local safety guide.`
+  },
+  kin: {
+    system: `You are the SafariGuard KinGuard Agent — a specialist AI dedicated to child transit safety.
+Your role:
+- Help parents and schools set up KinGuard child safety monitoring
+- Explain how school transit corridors (Green Corridors) are established and maintained
+- Configure and explain parent alert systems: deviation alerts, arrival confirmations, emergency triggers
+- Advise schools on integrating KinGuard into their existing security protocols
+- Guide subscription setup for KinGuard features (Tier 1 and above)
+- Be reassuring, clear, and specific — parents need confidence, not jargon.
+Tone: Warm, reassuring, clear. Parents are trusting you with their children's safety.`
+  },
+  biz: {
+    system: `You are the SafariGuard BizGuard Agent — a specialist AI for SME and corporate node verification.
+Your role:
+- Help businesses register as verified Safe Haven nodes on the SafariGuard Safety Map
+- Explain the BizGuard verification process and the Verified Node Badge benefits
+- Advise on subscription tiers and ROI of being a safety anchor point for tourists
+- Explain how verified businesses appear to tourists and subscribers on the live heat map
+- Help corporate partners understand the Sovereign Partner (Tier 3) API access and data benefits
+- Discuss revenue and visibility advantages for businesses in the SafariGuard network
+Tone: Professional, growth-oriented, clear business value focus.`
+  }
+};
+
+const histories = { threat: [], route: [], kin: [], biz: [] };
+
+async function send(agent) {
+  const inp = document.getElementById('inp-' + agent);
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  inp.disabled = true;
+
+  addMsg(agent, 'user', text);
+  histories[agent].push({ role: 'user', content: text });
+
+  const tid = addTyping(agent);
+
+  try {
+    // ── Calls your Cloudflare Worker proxy (API key stays server-side) ──
+    const res = await fetch('https://safariguard-cortex-proxy.YOUR-SUBDOMAIN.workers.dev/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: AGENTS[agent].system,
+        messages: histories[agent]
+      })
+    });
+
+    const data = await res.json();
+    removeEl(tid);
+
+    const reply = (data.content && data.content[0] && data.content[0].text)
+      ? data.content[0].text
+      : '⚠️ Cortex signal weak. Please retry.';
+
+    histories[agent].push({ role: 'assistant', content: reply });
+    addMsg(agent, 'ai', reply);
+  } catch (e) {
+    removeEl(tid);
+    addMsg(agent, 'ai', '⚠️ Cortex connection interrupted. Check your network and retry.');
+  }
+
+  inp.disabled = false;
+  inp.focus();
+}
+
+function qp(agent, text) {
+  const inp = document.getElementById('inp-' + agent);
+  inp.value = text;
+  send(agent);
+}
+
+function addMsg(agent, role, text) {
+  const win = document.getElementById('cw-' + agent);
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = text;
+  win.appendChild(d);
+  win.scrollTop = win.scrollHeight;
+}
+
+function addTyping(agent) {
+  const win = document.getElementById('cw-' + agent);
+  const id = 'td-' + agent + '-' + Date.now();
+  const d = document.createElement('div');
+  d.className = 'msg ai';
+  d.id = id;
+  d.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  win.appendChild(d);
+  win.scrollTop = win.scrollHeight;
+  return id;
+}
+
+function removeEl(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// Live counter flicker
+function flicker(id, base, spread, ms) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  setInterval(() => {
+    el.textContent = (base + Math.floor(Math.random() * spread * 2) - spread).toLocaleString();
+  }, ms);
+}
+flicker('cnt-nodes', 4812, 18, 3200);
+flicker('cnt-alerts', 3, 2, 5500);
+</script>
+</body>
+</html>
