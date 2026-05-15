@@ -1,0 +1,45 @@
+{
+  "name": "SafariGuard Global",
+  "short_name": "SafariGuard",
+  "description": "The world's first crowdsourced safety intelligence network",
+  "start_url": "/safariguard-web/",
+  "scope": "/safariguard-web/",
+  "display": "standalone",
+  "background_color": "#060608",
+  "theme_color": "#060608",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["security","utilities","navigation"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%23060608'/%3E%3Cpath d='M96 16L32 44v52c0 39.2 28.4 75.8 64 85.6C131.6 171.8 160 135.2 160 96V44L96 16z' fill='rgba(201,168,76,0.2)' stroke='%23c9a84c' stroke-width='4'/%3E%3Ccircle cx='96' cy='96' r='24' stroke='%23c9a84c' stroke-width='4' fill='none'/%3E%3Ccircle cx='96' cy='96' r='8' fill='%23c9a84c'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23060608'/%3E%3Cpath d='M256 42L82 118v140c0 104.5 75.7 202.2 174 228.3C354.3 460.2 430 362.5 430 258V118L256 42z' fill='rgba(201,168,76,0.2)' stroke='%23c9a84c' stroke-width='10'/%3E%3Ccircle cx='256' cy='256' r='64' stroke='%23c9a84c' stroke-width='10' fill='none'/%3E%3Ccircle cx='256' cy='256' r='22' fill='%23c9a84c'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Map",
+      "url": "/safariguard-web/#map",
+      "description": "View the real-time safety heat map"
+    },
+    {
+      "name": "Report Incident",
+      "url": "/safariguard-web/#map",
+      "description": "Report a safety incident"
+    },
+    {
+      "name": "AI Agents",
+      "url": "/safariguard-web/#agents",
+      "description": "Talk to a SafariGuard AI agent"
+    }
+  ],
+  "prefer_related_applications": false
+}

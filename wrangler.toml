@@ -1,0 +1,6 @@
+name = "safariguard-cortex-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# No KV, no Durable Objects needed — this is a pure proxy worker.
+# Your ANTHROPIC_API_KEY is stored as an encrypted secret (see deployment steps).
