@@ -1,158 +1,193 @@
-/**
- * SafariGuard Sovereign Cortex — AI Proxy Worker
- * Cloudflare Worker · Powered by Google Gemini (Free)
- * Keeps your API key hidden server-side. CORS locked to your domain.
- */
+ /**
+  * SafariGuard Sovereign Cortex — Production AI Proxy
+  * Cloudflare Worker (Gemini AI Gateway)
+  * Secure, scalable, Vercel-compatible
+  */
 
-// ── ALLOWED ORIGINS ──
 const ALLOWED_ORIGINS = [
+  "https://safariguard.vercel.app",
   "https://robert-owuor74.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:5500",
 ];
 
-// ── RATE LIMITING (20 requests per IP per minute) ──
-const rateLimitMap = new Map();
+// ----------------------------
+// UTIL: CORS HANDLER
+// ----------------------------
+function getCorsHeaders(origin) {
+  const isAllowed = ALLOWED_ORIGINS.includes(origin);
 
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.start > windowMs) {
-    rateLimitMap.set(ip, { count: 1, start: now });
-    return true;
-  }
-  if (entry.count >= 20) return false;
-  entry.count++;
-  return true;
-}
-
-// ── CORS HEADERS ──
-function corsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
-    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
   };
 }
 
-// ── MAIN HANDLER ──
+// ----------------------------
+// UTIL: RATE LIMIT (in-memory)
+// ----------------------------
+const rateMap = new Map();
+
+function rateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+
+  const record = rateMap.get(ip);
+
+  if (!record || now - record.start > windowMs) {
+    rateMap.set(ip, { count: 1, start: now });
+    return true;
+  }
+
+  if (record.count >= 25) return false;
+
+  record.count++;
+  return true;
+}
+
+// ----------------------------
+// MAIN WORKER
+// ----------------------------
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
-    // Handle CORS preflight
+    const cors = getCorsHeaders(origin);
+
+    // Preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(origin),
-      });
+      return new Response(null, { status: 204, headers: cors });
     }
 
-    // Only allow POST to /chat
     const url = new URL(request.url);
-    if (request.method !== "POST" || url.pathname !== "/chat") {
-      return new Response(JSON.stringify({ error: "Not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+
+    // Only /chat endpoint
+    if (url.pathname !== "/chat") {
+      return jsonResponse({ error: "Not Found" }, 404, cors);
     }
 
-    // Block disallowed origins
-    if (!ALLOWED_ORIGINS.includes(origin) && !origin.includes("localhost")) {
-      return new Response(JSON.stringify({ error: "Origin not allowed" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+    // Only POST
+    if (request.method !== "POST") {
+      return jsonResponse({ error: "Method Not Allowed" }, 405, cors);
     }
 
-    // Rate limiting
-    if (!checkRateLimit(ip)) {
-      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait a moment." }), {
-        status: 429,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+    // Origin check (non-breaking fallback)
+    if (!ALLOWED_ORIGINS.includes(origin)) {
+      return jsonResponse(
+        { error: "Origin not allowed", origin },
+        403,
+        cors
+      );
     }
 
-    // Parse request body
+    // Rate limit
+    if (!rateLimit(ip)) {
+      return jsonResponse(
+        { error: "Rate limit exceeded" },
+        429,
+        cors
+      );
+    }
+
+    // Parse body
     let body;
     try {
       body = await request.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+      return jsonResponse({ error: "Invalid JSON" }, 400, cors);
     }
 
     if (!body.messages || !Array.isArray(body.messages)) {
-      return new Response(JSON.stringify({ error: "messages array required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-      });
+      return jsonResponse(
+        { error: "messages[] required" },
+        400,
+        cors
+      );
     }
 
-    // Convert messages to Gemini format
-    // Gemini uses "contents" with "parts" instead of "messages"
-    const systemPrompt = body.system || "";
+    const systemPrompt = body.system || `
+You are SafariGuard Cortex AI.
+You act as a real-time safety and route intelligence system.
+You analyze locations, risks, and provide safe routing advice.
+Keep responses short, actionable, and safety-focused.
+`;
 
-    const contents = body.messages.map(msg => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }]
+    // Convert to Gemini format
+    const contents = body.messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
     }));
 
-    // Build Gemini request
-    const geminiBody = {
+    const geminiPayload = {
       system_instruction: {
-        parts: [{ text: systemPrompt }]
+        parts: [{ text: systemPrompt }],
       },
-      contents: contents,
+      contents,
       generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.7,
-      }
+        temperature: 0.6,
+        maxOutputTokens: 800,
+      },
     };
 
-    // Call Google Gemini API (free tier)
+    // Check API key
+    if (!env.GOOGLE_API_KEY) {
+      return jsonResponse(
+        { error: "Missing GOOGLE_API_KEY in environment" },
+        500,
+        cors
+      );
+    }
+
+    // Call Gemini
     try {
-      const geminiRes = await fetch(
+      const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GOOGLE_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(geminiBody),
+          body: JSON.stringify(geminiPayload),
         }
       );
 
-      const data = await geminiRes.json();
+      const data = await response.json();
 
-      // Extract reply text from Gemini response
-      const replyText =
+      const text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Cortex signal weak. Please retry.";
+        "Cortex temporarily unavailable. Try again.";
 
-      // Return in a simple format the frontend can use
-      return new Response(
-        JSON.stringify({
-          content: [{ type: "text", text: replyText }]
-        }),
+      return jsonResponse(
         {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-        }
+          success: true,
+          reply: text,
+        },
+        200,
+        cors
       );
-
     } catch (err) {
-      return new Response(
-        JSON.stringify({ error: "Cortex upstream error", detail: err.message }),
+      return jsonResponse(
         {
-          status: 502,
-          headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-        }
+          error: "Cortex AI failure",
+          detail: err.message,
+        },
+        502,
+        cors
       );
     }
   },
 };
+
+// ----------------------------
+// HELPER: JSON RESPONSE
+// ----------------------------
+function jsonResponse(data, status, headers) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+  });
+}
